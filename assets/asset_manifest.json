@@ -15,7 +15,7 @@
       "license": "CC BY 4.0 (verify exact model page terms before release)",
       "license_url": "https://creativecommons.org/licenses/by/4.0/",
       "format": "GLB/GLTF or FBX after download",
-      "status": "candidate-not-downloaded",
+      "status": "owner-supplied-archive-inspected; project import pending",
       "required_attribution": "Indian Cricket Player Rigged — numaan.k99 (Sketchfab), licensed under CC BY; source URL above."
     },
     {
@@ -53,7 +53,7 @@
     }
   ],
   "integration": {
-    "runtime_model_path": "res://assets/characters/cricket_player.glb",
+    "runtime_model_path": "res://assets/characters/Kohli.fbx",
     "animation_aliases": {
       "idle": "Idle",
       "run": "Run",
