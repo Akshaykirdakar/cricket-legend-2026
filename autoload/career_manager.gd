@@ -101,3 +101,57 @@ func update_setting(setting: String, value: Variant) -> void:
 		settings[setting] = value
 		profile["settings"] = settings
 		save_profile()
+
+func start_tournament(name: String, teams: Array) -> void:
+	profile["tournament"] = {
+		"active": true,
+		"name": name,
+		"teams": teams.duplicate(),
+		"fixtures": _build_round_robin(teams),
+		"played": 0,
+		"points": {},
+		"results": []
+	}
+	for team in teams:
+		profile["tournament"]["points"][str(team)] = 0
+	save_profile()
+	profile_changed.emit(profile.duplicate(true))
+
+func _build_round_robin(teams: Array) -> Array:
+	var fixtures: Array = []
+	for i in range(teams.size()):
+		for j in range(i + 1, teams.size()):
+			fixtures.append({"home": str(teams[i]), "away": str(teams[j]), "played": false})
+	return fixtures
+
+func record_tournament_result(home: String, away: String, winner: String) -> void:
+	var tournament: Dictionary = profile.get("tournament", {})
+	if not bool(tournament.get("active", false)):
+		return
+	var fixtures: Array = tournament.get("fixtures", [])
+	for fixture in fixtures:
+		if not bool(fixture.get("played", false)) and str(fixture.get("home", "")) == home and str(fixture.get("away", "")) == away:
+			fixture["played"] = true
+			fixture["winner"] = winner
+			tournament["played"] = int(tournament.get("played", 0)) + 1
+			var points: Dictionary = tournament.get("points", {})
+			if winner == "Draw" or winner == "Tie":
+				points[home] = int(points.get(home, 0)) + 1
+				points[away] = int(points.get(away, 0)) + 1
+			elif not winner.is_empty():
+				points[winner] = int(points.get(winner, 0)) + 2
+			tournament["points"] = points
+			break
+	tournament["fixtures"] = fixtures
+	profile["tournament"] = tournament
+	save_profile()
+	profile_changed.emit(profile.duplicate(true))
+
+func get_tournament_standings() -> Array:
+	var tournament: Dictionary = profile.get("tournament", {})
+	var points: Dictionary = tournament.get("points", {})
+	var standings: Array = []
+	for team in points.keys():
+		standings.append({"team": str(team), "points": int(points[team])})
+	standings.sort_custom(func(a, b): return int(a["points"]) > int(b["points"]))
+	return standings
