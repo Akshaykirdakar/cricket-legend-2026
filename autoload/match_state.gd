@@ -279,8 +279,8 @@ func _finish_match(chase_won: bool) -> void:
 	match_finished.emit(result)
 
 func _finish_test_match() -> void:
-	var team_a := "India"
-	var team_b := "Australia"
+	var team_a := str(innings[0].get("team", batting_team)) if not innings.is_empty() else batting_team
+	var team_b := str(innings[1].get("team", bowling_team)) if innings.size() > 1 else bowling_team
 	var a_runs := 0
 	var b_runs := 0
 	for i in range(innings.size()):
