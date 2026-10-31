@@ -1,0 +1,9 @@
+{
+  "team_id": "AUS",
+  "name": "Australia",
+  "short_name": "AUS",
+  "roster": [
+    {"id": "aus_001", "name": "Fictional Batter 01", "role": "BAT", "batting": 84, "timing": 82, "power": 86, "fielding": 80},
+    {"id": "aus_002", "name": "Fictional Bowler 01", "role": "BOWL", "bowling": 86, "pace": 90, "spin": 18, "fielding": 76}
+  ]
+}
