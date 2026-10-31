@@ -2,8 +2,117 @@
   "team_id": "IND",
   "name": "India",
   "short_name": "IND",
+  "kit_color": "#1746A2",
   "roster": [
-    {"id": "ind_001", "name": "Fictional Batter 01", "role": "BAT", "batting": 82, "timing": 86, "power": 74, "fielding": 78},
-    {"id": "ind_002", "name": "Fictional Bowler 01", "role": "BOWL", "bowling": 84, "pace": 88, "spin": 22, "fielding": 72}
+    {
+      "id": "ind_001",
+      "name": "Aarav Mehta",
+      "role": "BAT",
+      "batting": 86,
+      "timing": 88,
+      "power": 76,
+      "fielding": 84,
+      "bowling": 42
+    },
+    {
+      "id": "ind_002",
+      "name": "Vihaan Rao",
+      "role": "BAT",
+      "batting": 83,
+      "timing": 85,
+      "power": 81,
+      "fielding": 80,
+      "bowling": 35
+    },
+    {
+      "id": "ind_003",
+      "name": "Kabir Deshmukh",
+      "role": "WK",
+      "batting": 79,
+      "timing": 82,
+      "power": 74,
+      "fielding": 88,
+      "bowling": 30
+    },
+    {
+      "id": "ind_004",
+      "name": "Ishaan Kulkarni",
+      "role": "AR",
+      "batting": 78,
+      "timing": 80,
+      "power": 82,
+      "fielding": 83,
+      "bowling": 72
+    },
+    {
+      "id": "ind_005",
+      "name": "Reyansh Patil",
+      "role": "AR",
+      "batting": 76,
+      "timing": 77,
+      "power": 85,
+      "fielding": 81,
+      "bowling": 78
+    },
+    {
+      "id": "ind_006",
+      "name": "Aditya Nair",
+      "role": "BAT",
+      "batting": 82,
+      "timing": 84,
+      "power": 79,
+      "fielding": 78,
+      "bowling": 20
+    },
+    {
+      "id": "ind_007",
+      "name": "Arjun Joshi",
+      "role": "BOWL",
+      "batting": 48,
+      "timing": 55,
+      "power": 42,
+      "fielding": 80,
+      "bowling": 88
+    },
+    {
+      "id": "ind_008",
+      "name": "Rudra Shah",
+      "role": "BOWL",
+      "batting": 44,
+      "timing": 51,
+      "power": 38,
+      "fielding": 82,
+      "bowling": 86
+    },
+    {
+      "id": "ind_009",
+      "name": "Dev Malhotra",
+      "role": "BOWL",
+      "batting": 51,
+      "timing": 57,
+      "power": 48,
+      "fielding": 79,
+      "bowling": 84
+    },
+    {
+      "id": "ind_010",
+      "name": "Yuvaan Iyer",
+      "role": "BOWL",
+      "batting": 46,
+      "timing": 49,
+      "power": 52,
+      "fielding": 85,
+      "bowling": 82
+    },
+    {
+      "id": "ind_011",
+      "name": "Samar Bhosale",
+      "role": "BOWL",
+      "batting": 42,
+      "timing": 48,
+      "power": 45,
+      "fielding": 77,
+      "bowling": 80
+    }
   ]
 }
