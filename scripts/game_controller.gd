@@ -1,6 +1,6 @@
 extends Node3D
 const Resolver = preload("res://scripts/match/delivery_resolver.gd")
-const Cricketer = preload("res://scripts/players/procedural_cricketer.gd")
+const Cricketer = preload("res://scripts/players/licensed_character.gd")
 const Presentation = preload("res://scripts/match/match_presentation.gd")
 const GRAVITY := 9.81
 const BALL_RADIUS := 0.13
