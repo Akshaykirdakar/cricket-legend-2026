@@ -212,21 +212,32 @@ func environment_setup() -> void:
 	add_child(sun)
 
 func camera_setup() -> void:
+	# Broadcast-style end-on view from behind the bowler, looking towards the striker.
 	var c := Camera3D.new()
-	c.position = Vector3(0, 16, 24)
-	c.rotation_degrees = Vector3(-32, 0, 0)
-	c.fov = 54
+	c.position = Vector3(0, 7.2, -19.5)
+	c.look_at(Vector3(0, 1.0, 1.5), Vector3.UP)
+	c.fov = 48
 	c.current = true
 	add_child(c)
 
 func stadium_setup() -> void:
-	_add_box(Vector3(0, -0.7, 0), Vector3(62, 0.6, 48), Color(0.07, 0.32, 0.13))
+	# Keep the playing area clear: stands sit beyond the boundary instead of
+	# crossing the camera foreground or hiding the pitch and fielders.
+	_add_box(Vector3(0, -0.7, 0), Vector3(76, 0.6, 64), Color(0.07, 0.32, 0.13))
+	var stand_color := Color(0.12, 0.17, 0.23)
 	for side in [-1.0, 1.0]:
-		_add_box(Vector3(side * 25.5, 2, 0), Vector3(2, 5, 47), Color(0.13, 0.18, 0.24))
-		_add_box(Vector3(0, 2, side * 19.5), Vector3(52, 5, 2), Color(0.16, 0.2, 0.26))
-		for row in range(4):
-			_add_box(Vector3(side * (22.0 - row * 1.5), 4.5 + row * 0.45, 0), Vector3(0.65, 0.5, 43), Color(0.72, 0.25 + row * 0.08, 0.12))
-			_add_box(Vector3(0, 4.5 + row * 0.45, side * (16.0 - row)), Vector3(47, 0.5, 0.65), Color(0.15, 0.35 + row * 0.08, 0.68))
+		_add_box(Vector3(side * 34.0, 1.7, 0), Vector3(1.5, 3.4, 58), stand_color)
+		_add_box(Vector3(0, 1.7, side * 27.0), Vector3(68, 3.4, 1.5), stand_color)
+		for row in range(5):
+			var tier_color := Color(0.18 + row * 0.035, 0.22 + row * 0.025, 0.31 + row * 0.025)
+			_add_box(Vector3(side * (31.5 + row * 1.0), 3.8 + row * 0.48, 0), Vector3(0.75, 0.55, 55), tier_color)
+			_add_box(Vector3(0, 3.8 + row * 0.48, side * (24.5 + row * 1.0)), Vector3(65, 0.55, 0.75), tier_color)
+	# Boundary rope sits on the edge of the playing area.
+	var rope := Color(0.92, 0.86, 0.62)
+	_add_box(Vector3(0, 0.04, -21.2), Vector3(56, 0.08, 0.12), rope)
+	_add_box(Vector3(0, 0.04, 21.2), Vector3(56, 0.08, 0.12), rope)
+	_add_box(Vector3(-28.0, 0.04, 0), Vector3(0.12, 0.08, 42.4), rope)
+	_add_box(Vector3(28.0, 0.04, 0), Vector3(0.12, 0.08, 42.4), rope)
 
 func pitch_setup() -> void:
 	_add_box(Vector3(0, -0.27, 0), Vector3(3.4, 0.18, 20), Color(0.58, 0.43, 0.27))
