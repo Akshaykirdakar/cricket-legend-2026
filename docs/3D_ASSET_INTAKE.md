@@ -47,8 +47,9 @@ Generic locomotion can be retargeted for run/jog/idle, but is not a substitute f
 1. Open the project in Godot 4.4+ and wait for FBX import.
 2. Open `res://assets/characters/Kohli.fbx` as a scene.
 3. Verify mesh visibility, skeleton skin binding, material slots and all six textures.
-4. Inspect AnimationPlayer/AnimationLibrary; record exact clip names.
+4. Inspect AnimationPlayer/AnimationLibrary; record exact clip names. If the FBX contains no clips, add cricket-specific clips as separate imported animation resources and retarget them to the discovered Skeleton3D.
 5. Check the character's forward axis, scale and ground pivot; adjust exported loader properties.
 6. Run Android export and test import, memory and frame time on a physical device.
+7. Run `godot --headless --path . --script res://tests/run_headless.gd`; CI now runs this after Godot import and before APK export.
 
 Do not mark the asset milestone complete until the actual binary and textures are in the repository/approved asset store, licence is cleared, import checks pass and the player animates correctly in match gameplay.
