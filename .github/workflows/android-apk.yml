@@ -10,55 +10,52 @@ jobs:
     container:
       image: barichello/godot-ci:4.4.1
     env:
-      GODOT_VERSION: "4.4.1"
-      ANDROID_SDK_ROOT: /usr/lib/android-sdk
       ANDROID_HOME: /usr/lib/android-sdk
+      ANDROID_SDK_ROOT: /usr/lib/android-sdk
       JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Java and archive utilities
+      - name: Verify preconfigured Godot Android toolchain
+        shell: bash
         run: |
-          apt-get update
-          apt-get install -y --no-install-recommends openjdk-17-jdk unzip curl ca-certificates
+          set -euxo pipefail
+          godot --version
           java -version
           test -x "$JAVA_HOME/bin/java"
+          test -x "$ANDROID_HOME/platform-tools/adb"
+          test -x "$ANDROID_HOME/cmdline-tools/cmdline-tools/bin/sdkmanager"
+          test -d "$ANDROID_HOME/platforms"
+          test -d "$ANDROID_HOME/build-tools"
+          test -f /root/debug.keystore
+          test -f /root/.local/share/godot/export_templates/4.4.1.stable/android_debug.apk
+          test -f /root/.local/share/godot/export_templates/4.4.1.stable/android_release.apk
 
-      - name: Install matching Godot Android export templates
+      - name: Configure Godot Android paths for runner user
+        shell: bash
         run: |
-          set -eux
-          TEMPLATE_DIR="$HOME/.local/share/godot/export_templates/$GODOT_VERSION.stable"
-          mkdir -p "$TEMPLATE_DIR" /tmp/godot-templates
-          curl -fL "https://github.com/godotengine/godot/releases/download/$GODOT_VERSION-stable/Godot_v$GODOT_VERSION-stable_export_templates.tpz" -o /tmp/godot-templates/templates.tpz
-          unzip -q /tmp/godot-templates/templates.tpz -d /tmp/godot-templates/unpacked
-          cp /tmp/godot-templates/unpacked/templates/* "$TEMPLATE_DIR/"
-          test -f "$TEMPLATE_DIR/android_debug.apk"
-          test -f "$TEMPLATE_DIR/android_release.apk"
-
-      - name: Configure Android SDK and debug signing
-        run: |
-          set -eux
-          mkdir -p "$HOME/.config/godot" "$HOME/.android"
+          set -euxo pipefail
+          mkdir -p "$HOME/.config/godot" "$HOME/.local/share/godot/export_templates/4.4.1.stable"
+          cp -a /root/.local/share/godot/export_templates/4.4.1.stable/. "$HOME/.local/share/godot/export_templates/4.4.1.stable/"
           cat > "$HOME/.config/godot/editor_settings-4.tres" <<EOF
           [gd_resource type="EditorSettings" format=3]
           [resource]
-          export/android/android_sdk_path = "$ANDROID_SDK_ROOT"
           export/android/java_sdk_path = "$JAVA_HOME"
+          export/android/android_sdk_path = "$ANDROID_HOME"
+          export/android/debug_keystore = "/root/debug.keystore"
+          export/android/debug_keystore_user = "androiddebugkey"
+          export/android/debug_keystore_pass = "android"
+          export/android/force_system_user = false
           EOF
-          keytool -genkeypair -v \
-            -keystore "$HOME/.android/debug.keystore" \
-            -storepass android \
-            -alias androiddebugkey \
-            -keypass android \
-            -dname "CN=Android Debug,O=Android,C=US" \
-            -keyalg RSA -keysize 2048 -validity 10000
-          test -f "$HOME/.android/debug.keystore"
 
       - name: Import and validate project
+        shell: bash
         run: godot --headless --editor --path . --quit
 
       - name: Export Android debug APK
+        shell: bash
         run: |
+          set -euxo pipefail
           mkdir -p build
           godot --headless --path . --export-debug "Android" build/CricketLegends26-debug.apk
           test -s build/CricketLegends26-debug.apk
