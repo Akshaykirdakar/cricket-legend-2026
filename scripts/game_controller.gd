@@ -279,6 +279,30 @@ func stadium_setup() -> void:
 	for side in [-1.0, 1.0]:
 		for row in range(4):
 			_add_box(Vector3(side * (34.0 + row * 0.8), 1.0 + row * 0.45, -1.0), Vector3(0.65, 0.4, 48), stand_color)
+	# Crowd is rendered as one MultiMesh to keep draw calls low on Android.
+	var crowd_mesh := SphereMesh.new()
+	crowd_mesh.radius = 0.12
+	crowd_mesh.height = 0.24
+	var crowd_material := StandardMaterial3D.new()
+	crowd_material.albedo_color = Color(0.72, 0.76, 0.82)
+	var crowd := MultiMesh.new()
+	crowd.transform_format = MultiMesh.TRANSFORM_3D
+	crowd.mesh = crowd_mesh
+	var crowd_transforms: Array[Transform3D] = []
+	for row in range(5):
+		var z := -29.0 - row * 0.9
+		var y := 2.0 + row * 0.52
+		for index in range(100):
+			var x := -31.0 + float(index) * 0.62
+			var offset := Vector3(x, y + sin(float(index) * 0.7) * 0.12, z)
+			crowd_transforms.append(Transform3D(Basis.IDENTITY.scaled(Vector3(0.75, 1.0, 0.75)), offset))
+	crowd.instance_count = crowd_transforms.size()
+	for i in range(crowd_transforms.size()):
+		crowd.set_instance_transform(i, crowd_transforms[i])
+	var crowd_node := MultiMeshInstance3D.new()
+	crowd_node.multimesh = crowd
+	crowd_node.material_override = crowd_material
+	add_child(crowd_node)
 	# Boundary rope around the field.
 	var rope := Color(0.92, 0.86, 0.62)
 	_add_box(Vector3(0, 0.04, -21.2), Vector3(56, 0.08, 0.12), rope)
