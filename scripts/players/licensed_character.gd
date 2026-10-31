@@ -4,7 +4,7 @@ extends Node3D
 ## If the asset is absent, use the explicitly temporary procedural fallback.
 
 const FALLBACK = preload("res://scripts/players/procedural_cricketer.gd")
-const DEFAULT_MODEL_PATH := "res://assets/characters/cricket_player.glb"
+const DEFAULT_MODEL_PATH := "res://assets/characters/Kohli.fbx"
 
 @export var model_path := DEFAULT_MODEL_PATH
 @export var kit_color: Color = Color(0.08, 0.28, 0.78)
