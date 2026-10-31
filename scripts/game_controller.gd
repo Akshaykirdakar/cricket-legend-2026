@@ -51,9 +51,18 @@ func _ready() -> void:
 	hud.swing_pressed.connect(_swing)
 	MatchState.score_changed.connect(hud.set_score)
 	MatchState.match_finished.connect(_match_over)
-	MatchState.start_match(MatchState.Format.T20)
+	var selected_format := str(CareerManager.profile.get("selected_format", "T20"))
+	MatchState.batting_team = str(CareerManager.profile.get("selected_team", "India"))
+	MatchState.bowling_team = str(CareerManager.profile.get("selected_opponent", "Australia"))
+	var format_value := MatchState.Format.T20
+	if selected_format == "ODI":
+		format_value = MatchState.Format.ODI
+	elif selected_format == "TEST":
+		format_value = MatchState.Format.TEST
+	MatchState.start_match(format_value)
+	MatchState.match_finished.connect(CareerManager.record_match)
 	hud.set_score({"team":"India","runs":0,"wickets":0,"overs":"0.0","target":-1,"innings":1})
-	hud.set_message("INDIA vs AUSTRALIA  •  T20  •  BOWL TO START")
+	hud.set_message("%s vs %s  •  %s  •  BOWL TO START" % [MatchState.batting_team.to_upper(), MatchState.bowling_team.to_upper(), selected_format])
 
 func _process(delta: float) -> void:
 	elapsed += delta
