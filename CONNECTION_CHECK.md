@@ -1,1 +1,0 @@
-Temporary GitHub connection write test. This file will be removed after verification.
