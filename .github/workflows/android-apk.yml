@@ -20,7 +20,7 @@ jobs:
       - name: Install Java and archive utilities
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends openjdk-17-jdk unzip
+          apt-get install -y --no-install-recommends openjdk-17-jdk unzip curl ca-certificates
           java -version
           test -x "$JAVA_HOME/bin/java"
 
