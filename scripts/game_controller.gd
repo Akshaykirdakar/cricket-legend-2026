@@ -180,19 +180,35 @@ func _update_fielding_ai(delta: float) -> void:
 	direction.y = 0.0
 	if nearest_distance > 1.15:
 		nearest.position += direction.normalized() * minf(7.5 * delta, nearest_distance - 1.0)
-	if ball.position.y > 1.0 and nearest_distance < 1.35 and ball_velocity.y < 0.0:
-		if rng.randf() < 0.72 * contact_quality:
+	if ball.position.y > 1.0 and nearest_distance < 0.72 and ball_velocity.y < 0.0:
+		# Catch is awarded only when the fielder reaches the descending ball.
+		if ball.position.y > 1.45 and contact_quality > 0.38:
 			MatchState.apply_delivery({"bat_runs": 0, "total_runs": 0, "legal": true, "wicket": true, "dismissal": "caught"})
-			hud.set_message("CAUGHT! — OUT")
+			presentation.announce_event("catch")
+			presentation.finish_replay()
 			phase = "reset"
 			elapsed = 0.0
 			return
-	if nearest_distance < 0.85 and ball.position.y < 0.65:
-		ball_velocity *= 0.18
-		ball.position = ball.position.lerp(nearest.position + Vector3(0, 0.25, 0), 0.35)
+	if nearest_distance < 0.72 and ball.position.y < 0.65:
+		ball_velocity = Vector3.ZERO
+		ball.position = nearest.position + Vector3(0, 0.25, 0)
+		if run_requested:
+			if run_elapsed > 2.35:
+				MatchState.apply_delivery({"bat_runs": 0, "total_runs": 0, "legal": true, "wicket": true, "dismissal": "run_out"})
+				presentation.announce_event("runout")
+			else:
+				MatchState.apply_delivery({"bat_runs": 1, "total_runs": 1, "legal": true, "wicket": false})
+				presentation.announce_event("run")
+		else:
+			_finish_ball_in_field()
+		presentation.finish_replay()
+		phase = "reset"
+		elapsed = 0.0
 
 func _finish_boundary() -> void:
 	var runs := 4 if ball_bounced else 6
+	presentation.announce_event("four" if runs == 4 else "six")
+	presentation.finish_replay()
 	MatchState.apply_delivery({"bat_runs":runs,"total_runs":runs,"legal":true,"wicket":false})
 	hud.set_message("FOUR!" if runs == 4 else "SIX!")
 	phase = "reset"
@@ -207,6 +223,8 @@ func _finish_ball_in_field() -> void:
 	elif ball_travelled > 4.5:
 		runs = 1
 	MatchState.apply_delivery({"bat_runs":runs,"total_runs":runs,"legal":true,"wicket":false})
+	presentation.announce_event("dot" if runs == 0 else "run")
+	presentation.finish_replay()
 	hud.set_message("DOT BALL" if runs == 0 else "%d RUN(S)" % runs)
 	phase = "reset"
 	elapsed = 0.0
