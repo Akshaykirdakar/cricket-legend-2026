@@ -9,7 +9,7 @@ var active := false
 func select_shot(shot: String) -> void:
 	selected_shot = shot.to_upper()
 
-func _input(event: InputEvent) -> void:
+func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventScreenTouch:
 		if event.pressed:
 			swipe_origin = event.position
