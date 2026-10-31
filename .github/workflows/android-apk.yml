@@ -1,0 +1,22 @@
+name: Android Build
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.4.1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Import project
+        run: godot --headless --editor --path . --quit
+      - name: Export Android debug APK
+        run: |
+          mkdir -p build
+          godot --headless --path . --export-debug "Android" build/CricketLegends26-debug.apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CricketLegends26-Android-debug
+          path: build/CricketLegends26-debug.apk
