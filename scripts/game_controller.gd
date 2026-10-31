@@ -212,27 +212,30 @@ func environment_setup() -> void:
 	add_child(sun)
 
 func camera_setup() -> void:
-	# Broadcast-style end-on view from behind the bowler, looking towards the striker.
+	# Elevated end-on broadcast camera. This keeps the full pitch and fielders
+	# in frame while looking from behind the striker towards the bowler.
 	var c := Camera3D.new()
-	c.position = Vector3(0, 7.2, -19.5)
-	c.look_at(Vector3(0, 1.0, 1.5), Vector3.UP)
-	c.fov = 48
+	c.position = Vector3(0, 18.0, 27.0)
+	c.rotation_degrees = Vector3(-34.0, 0.0, 0.0)
+	c.fov = 58.0
 	c.current = true
 	add_child(c)
 
 func stadium_setup() -> void:
-	# Keep the playing area clear: stands sit beyond the boundary instead of
-	# crossing the camera foreground or hiding the pitch and fielders.
+	# Open sightlines: no tall walls or crossbars between the camera and pitch.
 	_add_box(Vector3(0, -0.7, 0), Vector3(76, 0.6, 64), Color(0.07, 0.32, 0.13))
 	var stand_color := Color(0.12, 0.17, 0.23)
+	# Low, distant seating beyond the far boundary only.
+	for row in range(5):
+		var y := 1.2 + row * 0.55
+		var z := -29.0 - row * 0.9
+		var tier_color := Color(0.16 + row * 0.025, 0.20 + row * 0.02, 0.28 + row * 0.02)
+		_add_box(Vector3(0, y, z), Vector3(66, 0.45, 0.8), tier_color)
+	# Side stands remain outside the playable field and below the sightline.
 	for side in [-1.0, 1.0]:
-		_add_box(Vector3(side * 34.0, 1.7, 0), Vector3(1.5, 3.4, 58), stand_color)
-		_add_box(Vector3(0, 1.7, side * 27.0), Vector3(68, 3.4, 1.5), stand_color)
-		for row in range(5):
-			var tier_color := Color(0.18 + row * 0.035, 0.22 + row * 0.025, 0.31 + row * 0.025)
-			_add_box(Vector3(side * (31.5 + row * 1.0), 3.8 + row * 0.48, 0), Vector3(0.75, 0.55, 55), tier_color)
-			_add_box(Vector3(0, 3.8 + row * 0.48, side * (24.5 + row * 1.0)), Vector3(65, 0.55, 0.75), tier_color)
-	# Boundary rope sits on the edge of the playing area.
+		for row in range(4):
+			_add_box(Vector3(side * (34.0 + row * 0.8), 1.0 + row * 0.45, -1.0), Vector3(0.65, 0.4, 48), stand_color)
+	# Boundary rope around the field.
 	var rope := Color(0.92, 0.86, 0.62)
 	_add_box(Vector3(0, 0.04, -21.2), Vector3(56, 0.08, 0.12), rope)
 	_add_box(Vector3(0, 0.04, 21.2), Vector3(56, 0.08, 0.12), rope)
