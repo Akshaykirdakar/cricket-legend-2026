@@ -1,0 +1,66 @@
+{
+  "project": "Cricket Legends 26",
+  "asset_policy": {
+    "commercial_use_required": true,
+    "redistributable_in_game_required": true,
+    "exclude": ["CC BY-NC", "CC BY-ND", "editorial-only", "unclear-license"],
+    "record_license_file_for_each_asset": true
+  },
+  "characters": [
+    {
+      "id": "indian_cricket_player_rigged",
+      "title": "Indian Cricket Player Rigged",
+      "creator": "numaan.k99",
+      "source": "https://sketchfab.com/3d-models/indian-cricket-player-rigged-a1001b602e4f430bb9de68c24d9a4aa7",
+      "license": "CC BY 4.0 (verify exact model page terms before release)",
+      "license_url": "https://creativecommons.org/licenses/by/4.0/",
+      "format": "GLB/GLTF or FBX after download",
+      "status": "candidate-not-downloaded",
+      "required_attribution": "Indian Cricket Player Rigged — numaan.k99 (Sketchfab), licensed under CC BY; source URL above."
+    },
+    {
+      "id": "diesel_cc0_humanoid",
+      "title": "3D Character Rigged (Diesel)",
+      "creator": "THEUNSEENVULGA",
+      "source": "https://theunseenvulga.itch.io/3d-charater-riggeddiesel",
+      "license": "CC0 1.0 (as stated on source page)",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "format": "GLB",
+      "status": "candidate-not-downloaded",
+      "intended_use": "Fallback rig/retargeting test only; not a cricket-specific final player."
+    }
+  ],
+  "animation_sources": [
+    {
+      "id": "adobe_mixamo",
+      "title": "Adobe Mixamo",
+      "source": "https://www.mixamo.com/",
+      "license": "Adobe Mixamo royalty-free use for games; do not redistribute raw source files as a standalone asset pack",
+      "license_url": "https://helpx.adobe.com/creative-cloud/faq/mixamo-faq.html",
+      "status": "manual-download-required",
+      "required_clips": [
+        "Idle",
+        "Run",
+        "Jog",
+        "Jump",
+        "Fall",
+        "Catch",
+        "Throw",
+        "Batting (custom cricket-specific animation required)",
+        "Bowling (custom cricket-specific animation required)",
+        "Wicketkeeping (custom cricket-specific animation required)"
+      ]
+    }
+  ],
+  "integration": {
+    "runtime_model_path": "res://assets/characters/cricket_player.glb",
+    "animation_aliases": {
+      "idle": "Idle",
+      "run": "Run",
+      "bat": "Batting",
+      "bowl": "Bowling",
+      "catch": "Catch"
+    },
+    "note": "Animation clip names must match the imported GLB clips or be mapped in scripts/players/licensed_character.gd."
+  }
+}
