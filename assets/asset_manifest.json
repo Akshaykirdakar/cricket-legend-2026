@@ -3,26 +3,33 @@
   "asset_policy": {
     "commercial_use_required": true,
     "redistributable_in_game_required": true,
-    "exclude": ["CC BY-NC", "CC BY-ND", "editorial-only", "unclear-license"],
+    "exclude": [
+      "CC BY-NC",
+      "CC BY-ND",
+      "editorial-only",
+      "unclear-license"
+    ],
     "record_license_file_for_each_asset": true
   },
   "characters": [
     {
       "id": "owner_supplied_kohli_fbx",
-      "title": "Kohli cricket player FBX",
-      "creator": "Unverified from archive metadata",
-      "source": "Owner-supplied file: indian-cricket-player-rigged.zip",
-      "format": "FBX 7400 with six external texture images",
-      "status": "archive-inspected; runtime-loader-configured; repository-binary-import-pending",
-      "rig_status": "FBX binary contains Armature and Hips/Spine bone identifiers; final Skeleton3D inspection in Godot pending",
-      "animation_status": "not verified; no cricket-specific clips assumed",
-      "license": "Not included in uploaded archive; verify original Sketchfab page and preserve exact licence/creator attribution before commercial release",
-      "required_before_release": [
-        "verify source creator and exact licence",
-        "import FBX and confirm mesh, skeleton, materials and textures in Godot",
-        "confirm or author cricket-specific animation clips",
-        "test Android rendering and performance"
-      ]
+      "title": "Kohli.fbx (owner-supplied archive)",
+      "creator": "Unverified from archive",
+      "source": "User-uploaded ZIP in this conversation",
+      "license": "NOT VERIFIED — obtain source creator and written licence/attribution before commercial distribution",
+      "format": "FBX 7400",
+      "status": "source-file-received; import package prepared; repository binary upload pending",
+      "files": [
+        "assets/characters/Kohli.fbx",
+        "assets/characters/textures/baseColor.001.jpg",
+        "assets/characters/textures/baseColor.003.jpg",
+        "assets/characters/textures/glasses_id_12_D.png",
+        "assets/characters/textures/outfit-m-indiancricket-01-v2-top-D.jpg",
+        "assets/characters/textures/outfit-m-indiancricket-01-v2-bottom-D.jpg",
+        "assets/characters/textures/outfit-m-indiancricket-01-v2-footwear-D.jpg"
+      ],
+      "notes": "Archive did not include a licence document. FBX binary contains Geometry/Skeleton-related nodes but no obvious AnimationStack or AnimationCurve strings; confirm imported skeleton and clip list in Godot."
     }
   ],
   "animation_sources": [
@@ -30,27 +37,34 @@
       "id": "adobe_mixamo",
       "title": "Adobe Mixamo",
       "source": "https://www.mixamo.com/",
-      "license": "Review current Adobe Mixamo terms before use; downloads require account access",
+      "license": "Review Adobe Mixamo terms for the intended use and retain the relevant terms with the project.",
       "license_url": "https://helpx.adobe.com/creative-cloud/faq/mixamo-faq.html",
-      "status": "manual-download-and-retarget-required",
+      "status": "manual-download-required",
       "required_clips": [
-        "Idle", "Run", "Jog", "Jump", "Fall", "Catch", "Throw",
-        "Batting stance", "Defensive shot", "Front-foot drive", "Pull shot",
-        "Lofted shot", "Fast bowling", "Spin bowling",
-        "Wicketkeeping take", "Fielding pickup", "Fielding dive"
+        "Idle",
+        "Run",
+        "Throw",
+        "Catch",
+        "Batting (cricket-specific)",
+        "Bowling (cricket-specific)",
+        "Wicketkeeping (cricket-specific)",
+        "Fielding pickup (cricket-specific)"
       ]
     }
   ],
   "integration": {
     "runtime_model_path": "res://assets/characters/Kohli.fbx",
-    "runtime_texture_directory": "res://assets/characters/textures/",
+    "texture_directory": "res://assets/characters/textures/",
+    "diagnostics_method": "get_character_diagnostics",
     "animation_aliases": {
       "idle": "Idle",
       "run": "Run",
       "bat": "Batting",
       "bowl": "Bowling",
-      "catch": "Catch"
+      "catch": "Catch",
+      "throw": "Throw",
+      "pickup": "Pickup"
     },
-    "note": "The loader logs imported animation clips. Map exact imported clip names to the aliases after inspecting the Godot-imported scene."
+    "note": "Imported clips are logged at runtime. Set animation_aliases to exact imported clip names; do not assume the FBX contains animations."
   }
 }
