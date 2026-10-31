@@ -2,8 +2,117 @@
   "team_id": "AUS",
   "name": "Australia",
   "short_name": "AUS",
+  "kit_color": "#D5A600",
   "roster": [
-    {"id": "aus_001", "name": "Fictional Batter 01", "role": "BAT", "batting": 84, "timing": 82, "power": 86, "fielding": 80},
-    {"id": "aus_002", "name": "Fictional Bowler 01", "role": "BOWL", "bowling": 86, "pace": 90, "spin": 18, "fielding": 76}
+    {
+      "id": "aus_001",
+      "name": "Lachlan Brooks",
+      "role": "BAT",
+      "batting": 87,
+      "timing": 86,
+      "power": 84,
+      "fielding": 85,
+      "bowling": 38
+    },
+    {
+      "id": "aus_002",
+      "name": "Noah Bennett",
+      "role": "BAT",
+      "batting": 84,
+      "timing": 88,
+      "power": 78,
+      "fielding": 82,
+      "bowling": 30
+    },
+    {
+      "id": "aus_003",
+      "name": "Ethan Walsh",
+      "role": "WK",
+      "batting": 80,
+      "timing": 83,
+      "power": 76,
+      "fielding": 90,
+      "bowling": 28
+    },
+    {
+      "id": "aus_004",
+      "name": "Oliver Hayes",
+      "role": "AR",
+      "batting": 81,
+      "timing": 82,
+      "power": 80,
+      "fielding": 84,
+      "bowling": 76
+    },
+    {
+      "id": "aus_005",
+      "name": "Jack Turner",
+      "role": "AR",
+      "batting": 78,
+      "timing": 79,
+      "power": 86,
+      "fielding": 82,
+      "bowling": 80
+    },
+    {
+      "id": "aus_006",
+      "name": "Mason Clarke",
+      "role": "BAT",
+      "batting": 83,
+      "timing": 85,
+      "power": 82,
+      "fielding": 80,
+      "bowling": 22
+    },
+    {
+      "id": "aus_007",
+      "name": "William Foster",
+      "role": "BOWL",
+      "batting": 45,
+      "timing": 52,
+      "power": 44,
+      "fielding": 83,
+      "bowling": 90
+    },
+    {
+      "id": "aus_008",
+      "name": "Henry Mitchell",
+      "role": "BOWL",
+      "batting": 47,
+      "timing": 50,
+      "power": 49,
+      "fielding": 81,
+      "bowling": 88
+    },
+    {
+      "id": "aus_009",
+      "name": "Lucas Parker",
+      "role": "BOWL",
+      "batting": 43,
+      "timing": 48,
+      "power": 42,
+      "fielding": 80,
+      "bowling": 86
+    },
+    {
+      "id": "aus_010",
+      "name": "Charlie Edwards",
+      "role": "BOWL",
+      "batting": 50,
+      "timing": 55,
+      "power": 46,
+      "fielding": 86,
+      "bowling": 84
+    },
+    {
+      "id": "aus_011",
+      "name": "Thomas Reid",
+      "role": "BOWL",
+      "batting": 41,
+      "timing": 47,
+      "power": 40,
+      "fielding": 78,
+      "bowling": 82
+    }
   ]
 }
