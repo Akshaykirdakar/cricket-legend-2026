@@ -1,5 +1,6 @@
 extends Node3D
 const Resolver = preload("res://scripts/match/delivery_resolver.gd")
+const Cricketer = preload("res://scripts/players/procedural_cricketer.gd")
 const GRAVITY := 9.81
 const BALL_RADIUS := 0.13
 const BOUNDARY_X := 28.0
@@ -22,6 +23,8 @@ var ball_travelled := 0.0
 var contact_quality := 0.0
 var fielders: Array[Node3D] = []
 var wicketkeeper: Node3D
+var striker: Node3D
+var bowler: Node3D
 
 func _ready() -> void:
 	rng.randomize()
@@ -29,8 +32,8 @@ func _ready() -> void:
 	camera_setup()
 	stadium_setup()
 	pitch_setup()
-	player_setup(Vector3(0.6, 0, 5.3), Color(0.05, 0.25, 0.8))
-	player_setup(Vector3(-0.6, 0, -8.3), Color(0.1, 0.55, 0.25))
+	striker = player_setup(Vector3(0.6, 0, 5.3), Color(0.05, 0.25, 0.8), "batter")
+	bowler = player_setup(Vector3(-0.6, 0, -8.3), Color(0.1, 0.55, 0.25), "bowler")
 	fielding_setup()
 	ball = MeshInstance3D.new()
 	var sphere := SphereMesh.new()
@@ -133,7 +136,7 @@ func _launch_ball(quality: float) -> void:
 
 func fielding_setup() -> void:
 	var positions := [Vector3(0, 0, 7.8), Vector3(-7, 0, 4), Vector3(7, 0, 4), Vector3(-13, 0, 0), Vector3(13, 0, 0), Vector3(-18, 0, -8), Vector3(18, 0, -8), Vector3(-9, 0, -15), Vector3(9, 0, -15)]
-	wicketkeeper = player_setup(Vector3(0, 0, 8.5), Color(0.08, 0.35, 0.18))
+	wicketkeeper = player_setup(Vector3(0, 0, 8.5), Color(0.08, 0.35, 0.18), "keeper")
 	for p in positions:
 		fielders.append(player_setup(p, Color(0.08, 0.35, 0.18)))
 
@@ -249,26 +252,12 @@ func pitch_setup() -> void:
 		for x in [-0.22, 0.0, 0.22]:
 			_add_box(Vector3(x, 0.35, z), Vector3(0.07, 0.75, 0.07), Color(0.92, 0.88, 0.72))
 
-func player_setup(pos: Vector3, shirt: Color) -> Node3D:
-	var root := Node3D.new()
+func player_setup(pos: Vector3, shirt: Color, role: String = "fielder") -> Node3D:
+	var root := Cricketer.new()
+	root.kit_color = shirt
+	root.role = role
 	root.position = pos
 	add_child(root)
-	var body := MeshInstance3D.new()
-	var cap := CapsuleMesh.new()
-	cap.radius = 0.34
-	cap.height = 1.55
-	body.mesh = cap
-	body.position.y = 0.95
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = shirt
-	body.material_override = mat
-	root.add_child(body)
-	var head := MeshInstance3D.new()
-	var h := SphereMesh.new()
-	h.radius = 0.24
-	head.mesh = h
-	head.position.y = 1.92
-	root.add_child(head)
 	return root
 
 func _on_shot(s: String) -> void:
@@ -285,6 +274,10 @@ func _bowl() -> void:
 	if phase != "ready" or MatchState.innings_status != MatchState.InningsStatus.LIVE:
 		return
 	phase = "bowling"
+	if bowler and bowler.has_method("set_animation"):
+		bowler.set_animation("bowl")
+	if striker and striker.has_method("set_animation"):
+		striker.set_animation("idle")
 	elapsed = 0.0
 	swing = false
 	ball.position = Vector3(0, 1, -8)
@@ -295,6 +288,8 @@ func _swing() -> void:
 	if phase != "bowling" or swing:
 		return
 	swing = true
+	if striker and striker.has_method("set_animation"):
+		striker.set_animation("bat")
 	swing_at = elapsed / 1.15
 	hud.set_message("Shot played!")
 
