@@ -5,7 +5,7 @@ Original Godot 4.4+ cricket game targeting Android landscape and offline-first p
 ## Current milestone
 This commit establishes the project foundation: match state, T20 innings progression, delivery outcome model, batting input abstraction, HUD, fictional sample team data and Android build workflow.
 
-**This is not a commercially finished game yet.** The current match scene uses placeholder geometry and simplified delivery resolution. Real licensed player assets and cricket-specific animations, collision-driven bat/ball physics, full fielding AI, comprehensive rules and physical-device QA remain production milestones. A licensed-character runtime loader and asset intake/licensing manifest are now in place; the actual downloaded model files are still pending.
+**This is not a commercially finished game yet.** The current match scene uses placeholder geometry and simplified delivery resolution. Real licensed player assets and cricket-specific animations, collision-driven bat/ball physics, full fielding AI, comprehensive rules and physical-device QA remain production milestones. A real owner-supplied cricket-player FBX and six textures have been inspected and packaged for import. The runtime loader now targets the FBX and supports model transforms/animation-clip discovery. The binary assets still need to be copied into the repository and imported/validated in Godot; cricket-specific animations, licence verification and physical-device QA remain pending.
 
 ## Engine and target
 - Godot 4.4+
