@@ -1,5 +1,10 @@
 extends Node3D
 const Resolver = preload("res://scripts/match/delivery_resolver.gd")
+const GRAVITY := 9.81
+const BALL_RADIUS := 0.13
+const BOUNDARY_X := 28.0
+const BOUNDARY_Z := 21.0
+
 var hud: MatchHUD
 var input_handler: BattingInput
 var ball: MeshInstance3D
@@ -11,6 +16,10 @@ var power := 0.7
 var aim := Vector2(0, -1)
 var shot := "DRIVE"
 var rng := RandomNumberGenerator.new()
+var ball_velocity := Vector3.ZERO
+var ball_bounced := false
+var ball_travelled := 0.0
+var contact_quality := 0.0
 
 func _ready() -> void:
 	rng.randomize()
@@ -22,7 +31,7 @@ func _ready() -> void:
 	player_setup(Vector3(-0.6, 0, -8.3), Color(0.1, 0.55, 0.25))
 	ball = MeshInstance3D.new()
 	var sphere := SphereMesh.new()
-	sphere.radius = 0.13
+	sphere.radius = BALL_RADIUS
 	ball.mesh = sphere
 	var red := StandardMaterial3D.new()
 	red.albedo_color = Color(0.85, 0.06, 0.04)
@@ -51,15 +60,80 @@ func _process(delta: float) -> void:
 		if t >= 1.0:
 			_resolve()
 	elif phase == "flight":
-		var t := clampf(elapsed / 0.9, 0.0, 1.0)
-		var dest := Vector3(aim.x * (9.0 + power * 15.0), 0.3 + sin(t * PI) * (2.0 + power * 3.0), 4.0 - aim.y * (10.0 + power * 17.0))
-		ball.position = ball.position.lerp(dest, minf(delta * 5.0, 1.0))
-		if t >= 1.0:
-			_flight_done()
+		_simulate_ball(delta)
 	elif phase == "reset" and elapsed > 0.9:
 		phase = "ready"
 		ball.visible = false
 		hud.set_message("Ready — choose a shot and bowl")
+
+func _simulate_ball(delta: float) -> void:
+	var previous_position := ball.position
+	ball_velocity.y -= GRAVITY * delta
+	ball.position += ball_velocity * delta
+	ball_travelled += previous_position.distance_to(ball.position)
+
+	if ball.position.y <= BALL_RADIUS:
+		ball.position.y = BALL_RADIUS
+		if not ball_bounced and absf(ball_velocity.y) > 2.0:
+			ball_bounced = true
+			ball_velocity.y = absf(ball_velocity.y) * 0.42
+			ball_velocity.x *= 0.78
+			ball_velocity.z *= 0.78
+		else:
+			ball_velocity = Vector3.ZERO
+			_finish_ball_in_field()
+			return
+
+	if absf(ball.position.x) >= BOUNDARY_X or absf(ball.position.z) >= BOUNDARY_Z:
+		_finish_boundary()
+		return
+
+	if elapsed > 5.5:
+		_finish_ball_in_field()
+
+func _launch_ball(quality: float) -> void:
+	var horizontal := Vector3(aim.x, 0.0, aim.y).normalized()
+	if horizontal.length_squared() < 0.01:
+		horizontal = Vector3(0, 0, -1)
+	var shot_lift := 0.0
+	match shot:
+		"LOFT":
+			shot_lift = 0.48
+		"PULL":
+			shot_lift = 0.18
+		"DEFEND":
+			shot_lift = 0.04
+		_:
+			shot_lift = 0.12
+	var speed := lerpf(8.0, 25.0, clampf(quality * power, 0.0, 1.0))
+	ball_velocity = horizontal * speed
+	ball_velocity.y = lerpf(2.0, 12.0, clampf(shot_lift + quality * 0.42, 0.0, 1.0)) * (0.55 + power * 0.45)
+	ball_bounced = false
+	ball_travelled = 0.0
+	contact_quality = quality
+	phase = "flight"
+	elapsed = 0.0
+	hud.set_message("Clean contact!" if quality > 0.78 else "Ball in play — run!")
+
+func _finish_boundary() -> void:
+	var runs := 4 if ball_bounced else 6
+	MatchState.apply_delivery({"bat_runs":runs,"total_runs":runs,"legal":true,"wicket":false})
+	hud.set_message("FOUR!" if runs == 4 else "SIX!")
+	phase = "reset"
+	elapsed = 0.0
+
+func _finish_ball_in_field() -> void:
+	var runs := 0
+	if ball_travelled > 17.0:
+		runs = 3
+	elif ball_travelled > 10.0:
+		runs = 2
+	elif ball_travelled > 4.5:
+		runs = 1
+	MatchState.apply_delivery({"bat_runs":runs,"total_runs":runs,"legal":true,"wicket":false})
+	hud.set_message("DOT BALL" if runs == 0 else "%d RUN(S)" % runs)
+	phase = "reset"
+	elapsed = 0.0
 
 func _add_box(pos: Vector3, size: Vector3, color: Color) -> void:
 	var m := MeshInstance3D.new()
@@ -168,23 +242,13 @@ func _resolve() -> void:
 		result = Resolver.resolve({"timing":timing,"power":power,"batter_skill":0.72,"shot":shot,"line":rng.randf_range(-0.3,0.3),"length":rng.randf(),"wicket_roll":rng.randf()})
 		if result.wicket:
 			result.total_runs = 0
-		elif result.bat_runs > 0:
-			phase = "flight"
-			elapsed = 0
-			hud.set_message("Contact! Ball in the field…")
+		else:
+			_launch_ball(float(result.get("quality", 0.0)))
 			return
 	MatchState.apply_delivery(result)
-	hud.set_message("WICKET!" if result.wicket else "Dot ball")
+	hud.set_message("WICKET!" if result.wicket else "DOT BALL")
 	phase = "reset"
-	elapsed = 0
-
-func _flight_done() -> void:
-	var d := Vector2(ball.position.x, ball.position.z).length()
-	var runs := 1 if d < 8 else (2 if d < 13 else (3 if d < 19 else (4 if d < 24 else 6)))
-	MatchState.apply_delivery({"bat_runs":runs,"total_runs":runs,"legal":true,"wicket":false})
-	hud.set_message("SIX!" if runs == 6 else ("FOUR!" if runs == 4 else "%d RUN(S)" % runs))
-	phase = "reset"
-	elapsed = 0
+	elapsed = 0.0
 
 func _match_over(result: Dictionary) -> void:
 	hud.set_message("MATCH OVER  •  %s" % str(result.get("winner", "Result")))
