@@ -5,12 +5,14 @@ const Ballistics = preload("res://scripts/physics/cricket_ballistics.gd")
 const Rules = preload("res://scripts/match/rules_engine.gd")
 
 var failures: Array[String] = []
+var passed_count := 0
 
 func _initialize() -> void:
 	call_deferred("_run")
 
 func _check(condition: bool, label: String) -> void:
 	if condition:
+		passed_count += 1
 		print("PASS: " + label)
 	else:
 		failures.append(label)
@@ -47,7 +49,7 @@ func _run() -> void:
 	var bye: Dictionary = Rules.normalize_delivery(0, Rules.ExtraType.BYE, 2, false)
 	_check(bool(bye.get("legal", false)), "Bye is a legal ball")
 
-	print("TEST SUMMARY: %d passed, %d failed" % [12 - failures.size(), failures.size()])
+	print("TEST SUMMARY: %d passed, %d failed" % [passed_count, failures.size()])
 	quit(1 if not failures.is_empty() else 0)
 
 func _load_roster(path: String) -> Array:
