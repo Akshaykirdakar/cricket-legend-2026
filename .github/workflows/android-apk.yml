@@ -3,20 +3,68 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
+
 jobs:
   export:
     runs-on: ubuntu-latest
     container:
       image: barichello/godot-ci:4.4.1
+    env:
+      GODOT_VERSION: "4.4.1"
+      ANDROID_SDK_ROOT: /usr/lib/android-sdk
+      ANDROID_HOME: /usr/lib/android-sdk
+      JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
     steps:
       - uses: actions/checkout@v4
-      - name: Import project
+
+      - name: Install Java and archive utilities
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends openjdk-17-jdk unzip
+          java -version
+          test -x "$JAVA_HOME/bin/java"
+
+      - name: Install matching Godot Android export templates
+        run: |
+          set -eux
+          TEMPLATE_DIR="$HOME/.local/share/godot/export_templates/$GODOT_VERSION.stable"
+          mkdir -p "$TEMPLATE_DIR" /tmp/godot-templates
+          curl -fL "https://github.com/godotengine/godot/releases/download/$GODOT_VERSION-stable/Godot_v$GODOT_VERSION-stable_export_templates.tpz" -o /tmp/godot-templates/templates.tpz
+          unzip -q /tmp/godot-templates/templates.tpz -d /tmp/godot-templates/unpacked
+          cp /tmp/godot-templates/unpacked/templates/* "$TEMPLATE_DIR/"
+          test -f "$TEMPLATE_DIR/android_debug.apk"
+          test -f "$TEMPLATE_DIR/android_release.apk"
+
+      - name: Configure Android SDK and debug signing
+        run: |
+          set -eux
+          mkdir -p "$HOME/.config/godot" "$HOME/.android"
+          cat > "$HOME/.config/godot/editor_settings-4.tres" <<EOF
+          [gd_resource type="EditorSettings" format=3]
+          [resource]
+          export/android/android_sdk_path = "$ANDROID_SDK_ROOT"
+          export/android/java_sdk_path = "$JAVA_HOME"
+          EOF
+          keytool -genkeypair -v \
+            -keystore "$HOME/.android/debug.keystore" \
+            -storepass android \
+            -alias androiddebugkey \
+            -keypass android \
+            -dname "CN=Android Debug,O=Android,C=US" \
+            -keyalg RSA -keysize 2048 -validity 10000
+          test -f "$HOME/.android/debug.keystore"
+
+      - name: Import and validate project
         run: godot --headless --editor --path . --quit
+
       - name: Export Android debug APK
         run: |
           mkdir -p build
           godot --headless --path . --export-debug "Android" build/CricketLegends26-debug.apk
+          test -s build/CricketLegends26-debug.apk
+
       - uses: actions/upload-artifact@v4
         with:
           name: CricketLegends26-Android-debug
           path: build/CricketLegends26-debug.apk
+          if-no-files-found: error
