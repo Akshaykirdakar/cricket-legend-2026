@@ -71,7 +71,11 @@ func _process(delta: float) -> void:
 	elapsed += delta
 	if phase == "bowling":
 		var t := clampf(elapsed / 1.15, 0.0, 1.0)
-		ball.position = Vector3(0, 1.0 + sin(t * PI), lerpf(-8.0, 4.5, t))
+		# Ball travels through a delivery corridor; lateral line and release
+		# height are fixed for this ball rather than decided by the shot roll.
+		var delivery_line := float(ball.get_meta("delivery_line", 0.0))
+		var release_height := float(ball.get_meta("release_height", 1.15))
+		ball.position = Vector3(delivery_line * t, release_height + sin(t * PI) * 0.28, lerpf(-8.0, 6.9, t))
 		if t >= 1.0:
 			_resolve()
 	elif phase == "flight":
@@ -79,6 +83,10 @@ func _process(delta: float) -> void:
 	elif phase == "reset" and elapsed > 0.9:
 		phase = "ready"
 		ball.visible = false
+		if striker and striker.has_method("set_animation"):
+			striker.set_animation("idle")
+		if bowler and bowler.has_method("set_animation"):
+			bowler.set_animation("idle")
 		hud.set_message("Ready — choose a shot and bowl")
 
 func _simulate_ball(delta: float) -> void:
@@ -281,6 +289,8 @@ func _bowl() -> void:
 	elapsed = 0.0
 	swing = false
 	ball.position = Vector3(0, 1, -8)
+	ball.set_meta("delivery_line", rng.randf_range(-0.42, 0.42))
+	ball.set_meta("release_height", rng.randf_range(0.72, 1.62))
 	ball.visible = true
 	hud.set_message("Bowler running in — SWING at the right moment!")
 
@@ -294,19 +304,39 @@ func _swing() -> void:
 	hud.set_message("Shot played!")
 
 func _resolve() -> void:
+	var line := float(ball.get_meta("delivery_line", 0.0))
+	var release_height := float(ball.get_meta("release_height", 1.15))
+	var timing_error := absf(swing_at - 0.90)
+	var contact_window := swing and timing_error <= 0.19
+	var bat_reach := absf(line - 0.55) <= 0.72
+	var bat_height := release_height >= 0.35 and release_height <= 2.05
 	var result: Dictionary
-	if not swing:
-		result = {"bat_runs":0,"total_runs":0,"legal":true,"wicket":rng.randf() < 0.07}
-	else:
-		var timing := clampf(1.0 - absf(swing_at - 0.78) / 0.78, 0, 1)
-		result = Resolver.resolve({"timing":timing,"power":power,"batter_skill":0.72,"shot":shot,"line":rng.randf_range(-0.3,0.3),"length":rng.randf(),"wicket_roll":rng.randf()})
-		if result.wicket:
-			result.total_runs = 0
-		else:
-			_launch_ball(float(result.get("quality", 0.0)))
-			return
+	if contact_window and bat_reach and bat_height:
+		var timing_quality := clampf(1.0 - timing_error / 0.19, 0.0, 1.0)
+		result = Resolver.resolve({
+			"timing": timing_quality,
+			"power": power,
+			"batter_skill": 0.72,
+			"shot": shot,
+			"line": line,
+			"length": 0.55,
+			"wicket_roll": 1.0
+		})
+		_launch_ball(float(result.get("quality", 0.0)))
+		return
+
+	# A missed delivery only hits the wicket if its actual line and height
+	# intersect the stumps. No random wicket roll is used for a missed shot.
+	var hits_stumps := absf(line) <= 0.34 and release_height <= 0.78
+	result = {
+		"bat_runs": 0,
+		"total_runs": 0,
+		"legal": true,
+		"wicket": hits_stumps,
+		"dismissal": "bowled" if hits_stumps else ""
+	}
 	MatchState.apply_delivery(result)
-	hud.set_message("WICKET!" if result.wicket else "DOT BALL")
+	hud.set_message("BOWLED!" if hits_stumps else ("MISSED — DOT BALL" if not swing else "MISSED — DOT BALL"))
 	phase = "reset"
 	elapsed = 0.0
 
