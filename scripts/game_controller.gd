@@ -43,7 +43,6 @@ func _ready() -> void:
 	fielding_setup()
 	presentation = Presentation.new()
 	add_child(presentation)
-	presentation.commentary_line.connect(hud.set_message)
 	ball = MeshInstance3D.new()
 	var sphere := SphereMesh.new()
 	sphere.radius = BALL_RADIUS
@@ -55,6 +54,7 @@ func _ready() -> void:
 	add_child(ball)
 	hud = MatchHUD.new()
 	add_child(hud)
+	presentation.commentary_line.connect(hud.set_message)
 	input_handler = BattingInput.new()
 	add_child(input_handler)
 	input_handler.shot_requested.connect(_on_swipe)
