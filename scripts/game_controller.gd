@@ -10,6 +10,7 @@ const BOUNDARY_Z := 21.0
 var hud: MatchHUD
 var input_handler: BattingInput
 var ball: MeshInstance3D
+var match_camera: Camera3D
 var phase := "ready"
 var elapsed := 0.0
 var swing := false
@@ -78,6 +79,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	elapsed += delta
+	_update_broadcast_camera(delta)
 	if phase == "bowling":
 		var t := clampf(elapsed / 1.15, 0.0, 1.0)
 		# Ball travels through a delivery corridor; lateral line and release
@@ -256,59 +258,106 @@ func environment_setup() -> void:
 	add_child(sun)
 
 func camera_setup() -> void:
-	# Elevated end-on broadcast camera. This keeps the full pitch and fielders
-	# in frame while looking from behind the striker towards the bowler.
-	var c := Camera3D.new()
-	c.position = Vector3(0, 18.0, 27.0)
-	c.rotation_degrees = Vector3(-34.0, 0.0, 0.0)
-	c.fov = 58.0
-	c.current = true
-	add_child(c)
+	match_camera = Camera3D.new()
+	match_camera.name = "BroadcastCamera"
+	match_camera.position = Vector3(0, 15.5, 24.0)
+	match_camera.fov = 52.0
+	match_camera.current = true
+	add_child(match_camera)
+	match_camera.look_at(Vector3(0, 0.8, -1.5), Vector3.UP)
+
+func _update_broadcast_camera(delta: float) -> void:
+	if match_camera == null:
+		return
+	var desired_position := Vector3(0, 15.5, 24.0)
+	var target := Vector3(0, 0.8, -1.5)
+	var desired_fov := 52.0
+	if phase == "bowling":
+		desired_position = Vector3(0.0, 8.2, 15.8)
+		target = Vector3(0.0, 1.0, -1.0)
+		desired_fov = 43.0
+	elif phase == "flight":
+		desired_position = Vector3(ball.position.x * 0.28, 12.0 + minf(ball.position.y * 0.12, 2.0), 20.0)
+		target = ball.position.lerp(Vector3.ZERO, 0.32)
+		desired_fov = 48.0
+	elif phase == "reset":
+		desired_position = Vector3(0.0, 12.5, 21.0)
+		target = Vector3.ZERO
+		desired_fov = 50.0
+	var blend := 1.0 - exp(-delta * 2.8)
+	match_camera.position = match_camera.position.lerp(desired_position, blend)
+	match_camera.fov = lerpf(match_camera.fov, desired_fov, blend)
+	match_camera.look_at(target, Vector3.UP)
 
 func stadium_setup() -> void:
-	# Open sightlines: no tall walls or crossbars between the camera and pitch.
-	_add_box(Vector3(0, -0.7, 0), Vector3(76, 0.6, 64), Color(0.07, 0.32, 0.13))
-	var stand_color := Color(0.12, 0.17, 0.23)
-	# Low, distant seating beyond the far boundary only.
-	for row in range(5):
-		var y := 1.2 + row * 0.55
-		var z := -29.0 - row * 0.9
-		var tier_color := Color(0.16 + row * 0.025, 0.20 + row * 0.02, 0.28 + row * 0.02)
-		_add_box(Vector3(0, y, z), Vector3(66, 0.45, 0.8), tier_color)
-	# Side stands remain outside the playable field and below the sightline.
+	# Full-size stylised 3D ground with alternating mowing bands.
+	_add_box(Vector3(0, -0.72, 0), Vector3(78, 0.55, 68), Color(0.035, 0.19, 0.075))
+	for band in range(12):
+		var z := -27.5 + float(band) * 5.0
+		_add_box(Vector3(0, -0.425, z), Vector3(74, 0.025, 2.5), Color(0.075, 0.34, 0.12) if band % 2 == 0 else Color(0.055, 0.29, 0.10))
+	# Tiered grandstands wrap the far side and both long sides.
+	for row in range(9):
+		var rise := 1.0 + float(row) * 0.72
+		var depth := -28.5 - float(row) * 1.35
+		var tier := Color(0.10 + row * 0.012, 0.14 + row * 0.012, 0.22 + row * 0.014)
+		_add_box(Vector3(0, rise, depth), Vector3(70, 0.62, 1.2), tier)
+		for side in [-1.0, 1.0]:
+			_add_box(Vector3(side * (34.0 + row * 1.15), rise, 0), Vector3(1.2, 0.62, 58), tier)
+	# Stadium roof fascia and illuminated advertising ribbon.
+	_add_box(Vector3(0, 8.2, -41.0), Vector3(76, 0.75, 1.1), Color(0.025, 0.045, 0.075))
 	for side in [-1.0, 1.0]:
-		for row in range(4):
-			_add_box(Vector3(side * (34.0 + row * 0.8), 1.0 + row * 0.45, -1.0), Vector3(0.65, 0.4, 48), stand_color)
-	# Crowd is rendered as one MultiMesh to keep draw calls low on Android.
-	var crowd_mesh := SphereMesh.new()
-	crowd_mesh.radius = 0.12
-	crowd_mesh.height = 0.24
-	var crowd_material := StandardMaterial3D.new()
-	crowd_material.albedo_color = Color(0.72, 0.76, 0.82)
-	var crowd := MultiMesh.new()
-	crowd.transform_format = MultiMesh.TRANSFORM_3D
-	crowd.mesh = crowd_mesh
-	var crowd_transforms: Array[Transform3D] = []
-	for row in range(5):
-		var z := -29.0 - row * 0.9
-		var y := 2.0 + row * 0.52
-		for index in range(100):
-			var x := -31.0 + float(index) * 0.62
-			var offset := Vector3(x, y + sin(float(index) * 0.7) * 0.12, z)
-			crowd_transforms.append(Transform3D(Basis.IDENTITY.scaled(Vector3(0.75, 1.0, 0.75)), offset))
-	crowd.instance_count = crowd_transforms.size()
-	for i in range(crowd_transforms.size()):
-		crowd.set_instance_transform(i, crowd_transforms[i])
-	var crowd_node := MultiMeshInstance3D.new()
-	crowd_node.multimesh = crowd
-	crowd_node.material_override = crowd_material
-	add_child(crowd_node)
-	# Boundary rope around the field.
-	var rope := Color(0.92, 0.86, 0.62)
-	_add_box(Vector3(0, 0.04, -21.2), Vector3(56, 0.08, 0.12), rope)
-	_add_box(Vector3(0, 0.04, 21.2), Vector3(56, 0.08, 0.12), rope)
-	_add_box(Vector3(-28.0, 0.04, 0), Vector3(0.12, 0.08, 42.4), rope)
-	_add_box(Vector3(28.0, 0.04, 0), Vector3(0.12, 0.08, 42.4), rope)
+		_add_box(Vector3(side * 44.0, 8.2, 0), Vector3(1.0, 0.75, 72), Color(0.025, 0.045, 0.075))
+	# Crowd instances: coloured seats/people are batched into a few MultiMeshes.
+	var crowd_colors := [Color(0.88,0.82,0.64), Color(0.72,0.78,0.88), Color(0.72,0.16,0.12), Color(0.12,0.52,0.30), Color(0.92,0.92,0.92)]
+	for color_index in range(crowd_colors.size()):
+		var crowd_mesh := CapsuleMesh.new()
+		crowd_mesh.radius = 0.105
+		crowd_mesh.height = 0.38
+		var crowd_material := StandardMaterial3D.new()
+		crowd_material.albedo_color = crowd_colors[color_index]
+		var crowd := MultiMesh.new()
+		crowd.transform_format = MultiMesh.TRANSFORM_3D
+		crowd.mesh = crowd_mesh
+		var transforms: Array[Transform3D] = []
+		for row in range(8):
+			for index in range(145):
+				var x := -33.0 + float(index) * 0.46
+				var z := -29.0 - float(row) * 1.35
+				var y := 1.65 + float(row) * 0.72
+				if (index + row * 7) % crowd_colors.size() == color_index:
+					transforms.append(Transform3D(Basis.IDENTITY, Vector3(x, y, z)))
+				var sx := -34.0 - float(row) * 1.15
+				if (index + row * 3) % crowd_colors.size() == color_index:
+					transforms.append(Transform3D(Basis.IDENTITY, Vector3(sx, y, -26.0 + float(index) * 0.36)))
+		crowd.instance_count = transforms.size()
+		for i in range(transforms.size()):
+			crowd.set_instance_transform(i, transforms[i])
+		var crowd_node := MultiMeshInstance3D.new()
+		crowd_node.multimesh = crowd
+		crowd_node.material_override = crowd_material
+		add_child(crowd_node)
+	# Floodlight towers and lamps frame the stadium skyline.
+	for x in [-1.0, 1.0]:
+		for z in [-1.0, 1.0]:
+			var tower_pos := Vector3(x * 36.0, 8.0, z * 25.0)
+			_add_box(tower_pos, Vector3(0.32, 16.0, 0.32), Color(0.22,0.24,0.27))
+			_add_box(tower_pos + Vector3(0, 8.0, 0), Vector3(3.8, 0.5, 1.1), Color(0.86,0.91,1.0))
+	# Continuous oval boundary rope, built from short 3D segments.
+	var rope_mat := StandardMaterial3D.new()
+	rope_mat.albedo_color = Color(0.96, 0.88, 0.62)
+	for i in range(128):
+		var a := TAU * float(i) / 128.0
+		var b := TAU * float(i + 1) / 128.0
+		var p1 := Vector3(cos(a) * 28.0, 0.08, sin(a) * 21.0)
+		var p2 := Vector3(cos(b) * 28.0, 0.08, sin(b) * 21.0)
+		var segment := MeshInstance3D.new()
+		var capsule := BoxMesh.new()
+		capsule.size = Vector3(0.16, 0.10, p1.distance_to(p2) + 0.08)
+		segment.mesh = capsule
+		segment.position = (p1 + p2) * 0.5
+		segment.look_at(p2, Vector3.UP)
+		segment.material_override = rope_mat
+		add_child(segment)
 
 func pitch_setup() -> void:
 	_add_box(Vector3(0, -0.27, 0), Vector3(3.4, 0.18, 20), Color(0.58, 0.43, 0.27))
