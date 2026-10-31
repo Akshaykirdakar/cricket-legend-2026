@@ -1,6 +1,7 @@
 extends Node3D
 const Resolver = preload("res://scripts/match/delivery_resolver.gd")
 const Cricketer = preload("res://scripts/players/procedural_cricketer.gd")
+const Presentation = preload("res://scripts/match/match_presentation.gd")
 const GRAVITY := 9.81
 const BALL_RADIUS := 0.13
 const BOUNDARY_X := 28.0
@@ -25,6 +26,10 @@ var fielders: Array[Node3D] = []
 var wicketkeeper: Node3D
 var striker: Node3D
 var bowler: Node3D
+var non_striker: Node3D
+var presentation: Node
+var run_requested := false
+var run_elapsed := 0.0
 
 func _ready() -> void:
 	rng.randomize()
@@ -33,8 +38,12 @@ func _ready() -> void:
 	stadium_setup()
 	pitch_setup()
 	striker = player_setup(Vector3(0.6, 0, 5.3), Color(0.05, 0.25, 0.8), "batter")
+	non_striker = player_setup(Vector3(-0.6, 0, -7.2), Color(0.05, 0.25, 0.8), "batter")
 	bowler = player_setup(Vector3(-0.6, 0, -8.3), Color(0.1, 0.55, 0.25), "bowler")
 	fielding_setup()
+	presentation = Presentation.new()
+	add_child(presentation)
+	presentation.commentary_line.connect(hud.set_message)
 	ball = MeshInstance3D.new()
 	var sphere := SphereMesh.new()
 	sphere.radius = BALL_RADIUS
@@ -79,6 +88,7 @@ func _process(delta: float) -> void:
 		if t >= 1.0:
 			_resolve()
 	elif phase == "flight":
+		presentation.record_ball_frame(ball.position, ball_velocity, phase)
 		_simulate_ball(delta)
 	elif phase == "reset" and elapsed > 0.9:
 		phase = "ready"
@@ -90,6 +100,11 @@ func _process(delta: float) -> void:
 		hud.set_message("Ready — choose a shot and bowl")
 
 func _simulate_ball(delta: float) -> void:
+	if run_requested:
+		run_elapsed += delta
+		if striker and non_striker:
+			striker.set_animation("run")
+			non_striker.set_animation("run")
 	var previous_position := ball.position
 	ball_velocity.y -= GRAVITY * delta
 	ball.position += ball_velocity * delta
@@ -273,6 +288,10 @@ func _on_shot(s: String) -> void:
 	input_handler.select_shot(s)
 
 func _on_swipe(s: String, direction: Vector2, strength: float) -> void:
+	if phase == "flight":
+		run_requested = true
+		run_elapsed = 0.0
+		return
 	shot = s
 	aim = direction.normalized()
 	power = strength
@@ -282,6 +301,10 @@ func _bowl() -> void:
 	if phase != "ready" or MatchState.innings_status != MatchState.InningsStatus.LIVE:
 		return
 	phase = "bowling"
+	run_requested = false
+	run_elapsed = 0.0
+	presentation.clear_replay()
+	presentation.announce_event("bowled")
 	if bowler and bowler.has_method("set_animation"):
 		bowler.set_animation("bowl")
 	if striker and striker.has_method("set_animation"):
