@@ -188,7 +188,9 @@ func apply_delivery(result: Dictionary) -> void:
 		_complete_innings()
 
 func _chase_complete() -> bool:
-	return match_format != Format.TEST and innings_number == 2 and target > 0 and int(current["runs"]) >= target
+	if match_format == Format.TEST:
+		return innings_number == 4 and target > 0 and int(current["runs"]) >= target
+	return innings_number == 2 and target > 0 and int(current["runs"]) >= target
 
 func _innings_complete() -> bool:
 	return int(current["wickets"]) >= max_wickets or int(current["legal_balls"]) >= overs_per_innings * 6
@@ -270,7 +272,11 @@ func _finish_test_match() -> void:
 		elif str(innings[i].get("team", "")) == team_b:
 			b_runs += int(innings[i].get("runs", 0))
 	var result := {"winner": "Draw", "team_a": team_a, "team_b": team_b, "team_a_runs": a_runs, "team_b_runs": b_runs, "innings": innings.duplicate(true)}
-	if a_runs != b_runs:
+	if innings_number == 4 and target > 0 and int(current["runs"]) >= target:
+		result["winner"] = batting_team
+		result["margin"] = max_wickets - int(current["wickets"])
+		result["margin_type"] = "wickets"
+	elif a_runs != b_runs:
 		result["winner"] = team_a if a_runs > b_runs else team_b
 		result["margin"] = absi(a_runs - b_runs)
 		result["margin_type"] = "runs"
