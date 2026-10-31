@@ -20,6 +20,8 @@ var ball_velocity := Vector3.ZERO
 var ball_bounced := false
 var ball_travelled := 0.0
 var contact_quality := 0.0
+var fielders: Array[Node3D] = []
+var wicketkeeper: Node3D
 
 func _ready() -> void:
 	rng.randomize()
@@ -29,6 +31,7 @@ func _ready() -> void:
 	pitch_setup()
 	player_setup(Vector3(0.6, 0, 5.3), Color(0.05, 0.25, 0.8))
 	player_setup(Vector3(-0.6, 0, -8.3), Color(0.1, 0.55, 0.25))
+	fielding_setup()
 	ball = MeshInstance3D.new()
 	var sphere := SphereMesh.new()
 	sphere.radius = BALL_RADIUS
@@ -72,6 +75,10 @@ func _simulate_ball(delta: float) -> void:
 	ball.position += ball_velocity * delta
 	ball_travelled += previous_position.distance_to(ball.position)
 
+	_update_fielding_ai(delta)
+	if phase != "flight":
+		return
+
 	if ball.position.y <= BALL_RADIUS:
 		ball.position.y = BALL_RADIUS
 		if not ball_bounced and absf(ball_velocity.y) > 2.0:
@@ -114,6 +121,40 @@ func _launch_ball(quality: float) -> void:
 	phase = "flight"
 	elapsed = 0.0
 	hud.set_message("Clean contact!" if quality > 0.78 else "Ball in play — run!")
+
+func fielding_setup() -> void:
+	var positions := [Vector3(0, 0, 7.8), Vector3(-7, 0, 4), Vector3(7, 0, 4), Vector3(-13, 0, 0), Vector3(13, 0, 0), Vector3(-18, 0, -8), Vector3(18, 0, -8), Vector3(-9, 0, -15), Vector3(9, 0, -15)]
+	wicketkeeper = player_setup(Vector3(0, 0, 8.5), Color(0.08, 0.35, 0.18))
+	for p in positions:
+		fielders.append(player_setup(p, Color(0.08, 0.35, 0.18)))
+
+func _update_fielding_ai(delta: float) -> void:
+	if fielders.is_empty() or phase != "flight":
+		return
+	var nearest: Node3D = null
+	var nearest_distance := INF
+	for fielder in fielders:
+		var d := Vector2(fielder.position.x - ball.position.x, fielder.position.z - ball.position.z).length()
+		if d < nearest_distance:
+			nearest_distance = d
+			nearest = fielder
+	if nearest == null:
+		return
+	var target := Vector3(ball.position.x, 0.0, ball.position.z)
+	var direction := target - nearest.position
+	direction.y = 0.0
+	if nearest_distance > 1.15:
+		nearest.position += direction.normalized() * minf(7.5 * delta, nearest_distance - 1.0)
+	if ball.position.y > 1.0 and nearest_distance < 1.35 and ball_velocity.y < 0.0:
+		if rng.randf() < 0.72 * contact_quality:
+			MatchState.apply_delivery({"bat_runs": 0, "total_runs": 0, "legal": true, "wicket": true, "dismissal": "caught"})
+			hud.set_message("CAUGHT! — OUT")
+			phase = "reset"
+			elapsed = 0.0
+			return
+	if nearest_distance < 0.85 and ball.position.y < 0.65:
+		ball_velocity *= 0.18
+		ball.position = ball.position.lerp(nearest.position + Vector3(0, 0.25, 0), 0.35)
 
 func _finish_boundary() -> void:
 	var runs := 4 if ball_bounced else 6
@@ -185,7 +226,7 @@ func pitch_setup() -> void:
 		for x in [-0.22, 0.0, 0.22]:
 			_add_box(Vector3(x, 0.35, z), Vector3(0.07, 0.75, 0.07), Color(0.92, 0.88, 0.72))
 
-func player_setup(pos: Vector3, shirt: Color) -> void:
+func player_setup(pos: Vector3, shirt: Color) -> Node3D:
 	var root := Node3D.new()
 	root.position = pos
 	add_child(root)
@@ -205,6 +246,7 @@ func player_setup(pos: Vector3, shirt: Color) -> void:
 	head.mesh = h
 	head.position.y = 1.92
 	root.add_child(head)
+	return root
 
 func _on_shot(s: String) -> void:
 	shot = s
