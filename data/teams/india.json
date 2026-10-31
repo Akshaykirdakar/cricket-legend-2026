@@ -1,0 +1,9 @@
+{
+  "team_id": "IND",
+  "name": "India",
+  "short_name": "IND",
+  "roster": [
+    {"id": "ind_001", "name": "Fictional Batter 01", "role": "BAT", "batting": 82, "timing": 86, "power": 74, "fielding": 78},
+    {"id": "ind_002", "name": "Fictional Bowler 01", "role": "BOWL", "bowling": 84, "pace": 88, "spin": 22, "fielding": 72}
+  ]
+}
