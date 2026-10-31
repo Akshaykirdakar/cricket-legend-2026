@@ -89,6 +89,22 @@ func _ensure_bowler(player_id: String) -> void:
 		bowlers[player_id] = _new_bowler()
 		current["bowlers"] = bowlers
 
+func _dismissal_name(value: Variant) -> String:
+	if value is String:
+		return str(value)
+	match int(value):
+		CricketRulesEngine.Dismissal.BOWLED: return "bowled"
+		CricketRulesEngine.Dismissal.CAUGHT: return "caught"
+		CricketRulesEngine.Dismissal.LBW: return "lbw"
+		CricketRulesEngine.Dismissal.RUN_OUT: return "run_out"
+		CricketRulesEngine.Dismissal.STUMPED: return "stumped"
+		CricketRulesEngine.Dismissal.HIT_WICKET: return "hit_wicket"
+		CricketRulesEngine.Dismissal.RETIRED_OUT: return "retired_out"
+		CricketRulesEngine.Dismissal.OBSTRUCTING_FIELD: return "obstructing_field"
+		CricketRulesEngine.Dismissal.HIT_BALL_TWICE: return "hit_ball_twice"
+		CricketRulesEngine.Dismissal.TIMED_OUT: return "timed_out"
+		_: return ""
+
 func apply_delivery(result: Dictionary) -> void:
 	if innings_status != InningsStatus.LIVE:
 		return
@@ -124,7 +140,8 @@ func apply_delivery(result: Dictionary) -> void:
 		bowler["wides"] = int(bowler["wides"]) + extras
 	elif extra_type == CricketRulesEngine.ExtraType.NO_BALL:
 		bowler["no_balls"] = int(bowler["no_balls"]) + extras
-	if wicket and str(result.get("dismissal", "bowled")) not in ["run_out", "retired_out", "obstructing_field"]:
+	var dismissal_name := _dismissal_name(result.get("dismissal", "bowled"))
+	if wicket and dismissal_name not in ["run_out", "retired_out", "obstructing_field", "hit_ball_twice", "timed_out"]:
 		bowler["wickets"] = int(bowler["wickets"]) + 1
 	bowlers[bowler_id] = bowler
 	current["bowlers"] = bowlers
@@ -148,7 +165,7 @@ func apply_delivery(result: Dictionary) -> void:
 
 	if wicket and int(current["wickets"]) < max_wickets:
 		current["wickets"] = int(current["wickets"]) + 1
-		var dismissal := str(result.get("dismissal", "bowled"))
+		var dismissal := dismissal_name
 		batter["dismissal"] = dismissal
 		batters[batter_id] = batter
 		current["batters"] = batters
@@ -168,7 +185,7 @@ func apply_delivery(result: Dictionary) -> void:
 		"extras": extras,
 		"legal": legal,
 		"wicket": wicket,
-		"dismissal": str(result.get("dismissal", "")),
+		"dismissal": dismissal_name,
 		"bowler": bowler_id,
 		"batter": batter_id
 	}
