@@ -24,12 +24,12 @@ This project must ship with authored, rigged 3D cricket characters. The procedur
 
 ## Required asset delivery
 
-Create this folder and place the inspected/import-ready files here:
+The supplied archive has now been inspected and packaged for import. It contains `source/Kohli.fbx` plus six texture files. The FBX is a model candidate; the archive does not establish that it contains cricket-specific animation clips or include a standalone licence document. Import package: `cricket-legends-character-import.zip` (downloaded from this conversation). Place its `assets/` folder into the Godot project root. The runtime loader now targets `res://assets/characters/Kohli.fbx`.\n\nCreate/keep this folder structure:
 
 ```
 assets/
   characters/
-    cricket_player.glb
+    Kohli.fbx
     LICENSES.md
     source/
   animations/
